@@ -29,7 +29,7 @@ const HabitItem: React.FC<HabitItemProps> = ({ habit, isCompleted, onToggle, onD
                 aria-label={`Mark ${habit.name} as ${isCompleted ? 'incomplete' : 'complete'}`}
             >
                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isCompleted ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-slate-500'}`}>
-                    {isCompleted && <CheckIcon className="w-4 h-4 text-white" />}
+                    {isCompleted && <CheckIcon size={16} color="white" />}
                 </div>
                 <div className="flex items-center gap-2">
                     <div className={`w-2.5 h-2.5 rounded-full ${colorClasses[habit.color]?.dot || 'bg-slate-500'}`}></div>
@@ -44,14 +44,14 @@ const HabitItem: React.FC<HabitItemProps> = ({ habit, isCompleted, onToggle, onD
                     aria-label={`Edit habit: ${habit.name}`}
                     className="text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 p-1 rounded-full transition"
                 >
-                    <PencilIcon className="w-5 h-5" />
+                    <PencilIcon size={20} color="#94a3b8" />
                 </button>
                 <button
                     onClick={() => onDelete(habit.id)}
                     aria-label={`Delete habit: ${habit.name}`}
                     className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full transition"
                 >
-                    <TrashIcon className="w-5 h-5" />
+                    <TrashIcon size={20} color="#94a3b8" />
                 </button>
             </div>
         </div>
