@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Habit } from '../types';
 import HabitItem from './HabitItem';
 
@@ -11,13 +12,16 @@ interface HabitListProps {
 }
 
 const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, onDelete, onEdit }) => {
+    const isDarkMode = useColorScheme() === 'dark';
+    const styles = getStyles(isDarkMode);
+
     return (
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
-            <h2 className="text-lg font-semibold mb-3 text-slate-800 dark:text-slate-200">Today's Habits</h2>
+        <View style={styles.container}>
+            <Text style={styles.title}>Today's Habits</Text>
             {habits.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-center py-4">No habits yet. Add one to get started!</p>
+                <Text style={styles.emptyText}>No habits yet. Add one to get started!</Text>
             ) : (
-                <div className="space-y-2">
+                <View style={styles.list}>
                     {habits.map(habit => (
                         <HabitItem
                             key={habit.id}
@@ -28,10 +32,33 @@ const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, on
                             onEdit={onEdit}
                         />
                     ))}
-                </div>
+                </View>
             )}
-        </div>
+        </View>
     );
 };
+
+const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+    container: {
+        backgroundColor: isDarkMode ? '#1e293b' : '#fff', // dark:bg-slate-800
+        padding: 16,
+        borderRadius: 8,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2,
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 12,
+        color: isDarkMode ? '#e2e8f0' : '#1e293b', // dark:text-slate-200
+    },
+    emptyText: {
+        color: isDarkMode ? '#94a3b8' : '#64748b', // dark:text-slate-400
+        textAlign: 'center',
+        paddingVertical: 16,
+    },
+    list: {
+        gap: 8,
+    }
+});
 
 export default HabitList;

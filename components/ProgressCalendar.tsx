@@ -1,55 +1,67 @@
-import React from 'react';
+import React, { useState } from 'react';
+// Fix: Import ScrollView which was missing.
+import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Modal, FlatList, Pressable, ScrollView } from 'react-native';
 import { Completions, Habit, HabitColor } from '../types';
 import { formatDate } from '../utils/date';
 
 // Define color schemes for the calendar heatmap
 const colorSchemes: Record<HabitColor, string[]> = {
-    emerald: [
-        'bg-emerald-200 dark:bg-emerald-900',
-        'bg-emerald-400 dark:bg-emerald-700',
-        'bg-emerald-600 dark:bg-emerald-500',
-        'bg-emerald-800 dark:bg-emerald-300'
-    ],
-    sky: [
-        'bg-sky-200 dark:bg-sky-900',
-        'bg-sky-400 dark:bg-sky-700',
-        'bg-sky-600 dark:bg-sky-500',
-        'bg-sky-800 dark:bg-sky-300'
-    ],
-    indigo: [
-        'bg-indigo-200 dark:bg-indigo-900',
-        'bg-indigo-400 dark:bg-indigo-700',
-        'bg-indigo-600 dark:bg-indigo-500',
-        'bg-indigo-800 dark:bg-indigo-300'
-    ],
-    rose: [
-        'bg-rose-200 dark:bg-rose-900',
-        'bg-rose-400 dark:bg-rose-700',
-        'bg-rose-600 dark:bg-rose-500',
-        'bg-rose-800 dark:bg-rose-300'
-    ],
-    amber: [
-        'bg-amber-200 dark:bg-amber-900',
-        'bg-amber-400 dark:bg-amber-700',
-        'bg-amber-600 dark:bg-amber-500',
-        'bg-amber-800 dark:bg-amber-300'
-    ],
-    violet: [
-        'bg-violet-200 dark:bg-violet-900',
-        'bg-violet-400 dark:bg-violet-700',
-        'bg-violet-600 dark:bg-violet-500',
-        'bg-violet-800 dark:bg-violet-300'
-    ],
+    emerald: ['#a7f3d0', '#6ee7b7', '#34d399', '#10b981'],
+    sky: ['#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9'],
+    indigo: ['#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1'],
+    rose: ['#fecdd3', '#fda4af', '#fb7185', '#f43f5e'],
+    amber: ['#fde68a', '#fcd34d', '#fbbf24', '#f59e0b'],
+    violet: ['#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6'],
 };
 
-interface ProgressCalendarProps {
-    habits: Habit[];
-    completions: Completions;
-    selectedHabitId: string | 'all';
-    onSelectHabit: (id: string | 'all') => void;
+const HabitPicker: React.FC<{ habits: Habit[], selectedHabitId: string | 'all', onSelectHabit: (id: string | 'all') => void, isDarkMode: boolean }> = ({ habits, selectedHabitId, onSelectHabit, isDarkMode }) => {
+    const [modalVisible, setModalVisible] = useState(false);
+    const styles = getPickerStyles(isDarkMode);
+
+    const selectedHabitName = selectedHabitId === 'all'
+        ? 'All Habits'
+        : habits.find(h => h.id === selectedHabitId)?.name;
+
+    // Fix: Widen the type of `item` to match what FlatList infers due to type widening of string literals.
+    const renderItem = ({ item }: { item: Habit | { id: string; name: string; } }) => (
+        <TouchableOpacity
+            style={styles.option}
+            onPress={() => {
+                onSelectHabit(item.id);
+                setModalVisible(false);
+            }}>
+            <Text style={styles.optionText}>{item.name}</Text>
+        </TouchableOpacity>
+    );
+
+    return (
+        <>
+            <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
+                <Text style={styles.pickerButtonText}>{selectedHabitName}</Text>
+            </TouchableOpacity>
+            <Modal
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
+                    <View style={styles.modalContent}>
+                        <FlatList
+                            data={[{ id: 'all', name: 'All Habits' }, ...habits]}
+                            renderItem={renderItem}
+                            keyExtractor={item => item.id}
+                        />
+                    </View>
+                </Pressable>
+            </Modal>
+        </>
+    );
 }
 
-const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions, selectedHabitId, onSelectHabit }) => {
+const ProgressCalendar: React.FC<Omit<ProgressCalendarProps, 'isDarkMode'>> = ({ habits, completions, selectedHabitId, onSelectHabit }) => {
+    const isDarkMode = useColorScheme() === 'dark';
+    const styles = getStyles(isDarkMode);
+
     const today = new Date();
     const endDate = new Date(today);
     endDate.setDate(endDate.getDate() + (6 - today.getDay())); // end of week
@@ -65,29 +77,19 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
     }
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
     const selectedHabit = habits.find(h => h.id === selectedHabitId);
     const habitColor = selectedHabit?.color || 'emerald';
 
-    const baseIntensityClass = 'bg-slate-200 dark:bg-slate-700';
+    const baseIntensityColor = isDarkMode ? '#334155' : '#e2e8f0'; // slate-700 or slate-200
     const currentScheme = colorSchemes[habitColor] || colorSchemes.emerald;
 
-    const intensityClasses = [
-        baseIntensityClass,
-        ...currentScheme,
-    ];
+    const intensityColors = [baseIntensityColor, ...currentScheme];
 
     const getIntensity = (date: Date) => {
         const dateString = formatDate(date);
         const completionCount = completions[dateString]?.length || 0;
         if (completionCount === 0) return 0;
-
-        // If a specific habit is selected, any completion marks it as the highest intensity
-        if (selectedHabitId !== 'all') {
-            return completionCount > 0 ? 4 : 0;
-        }
-
-        // For "All Habits", calculate percentage
+        if (selectedHabitId !== 'all') return completionCount > 0 ? 4 : 0;
         if (habits.length === 0) return 0;
         const percentage = completionCount / habits.length;
         if (percentage < 0.25) return 1;
@@ -96,72 +98,108 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
         return 4;
     };
 
-    const getMonthLabels = () => {
-        const months: { name: string, colStart: number }[] = [];
-        let lastMonth = -1;
-        dateArray.forEach((date, i) => {
-            const month = date.getMonth();
-            if (month !== lastMonth && date.getDate() <= 7) {
-                const col = Math.floor(i / 7) + 1;
-                if (!months.some(m => m.colStart === col)) {
-                    months.push({ name: date.toLocaleString('default', { month: 'short' }), colStart: col });
-                }
-            }
-            lastMonth = month;
-        });
-        return months;
-    };
-
-    const monthLabels = getMonthLabels();
+    const weeks = dateArray.reduce((acc, date, i) => {
+        if (i % 7 === 0) acc.push([]);
+        acc[acc.length - 1].push(date);
+        return acc;
+    }, [] as Date[][]);
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2 sm:mb-0">Progress</h2>
-                <select
-                    value={selectedHabitId}
-                    onChange={(e) => onSelectHabit(e.target.value)}
-                    className="bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                >
-                    <option value="all">All Habits</option>
-                    {habits.map(habit => (
-                        <option key={habit.id} value={habit.id}>{habit.name}</option>
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.title}>Progress</Text>
+                <HabitPicker habits={habits} selectedHabitId={selectedHabitId} onSelectHabit={onSelectHabit} isDarkMode={isDarkMode}/>
+            </View>
+
+            <View style={styles.calendarContainer}>
+                <View>
+                    {weekDays.map((day, i) => (
+                        <Text key={day} style={styles.dayLabel}>
+                            {i % 2 !== 0 ? day : ''}
+                        </Text>
                     ))}
-                </select>
-            </div>
-
-            <div className="grid grid-flow-col gap-1" style={{gridTemplateRows: 'auto repeat(7, minmax(0, 1fr))', gridAutoColumns: 'minmax(0, 1fr)'}}>
-                {monthLabels.map((month) => (
-                    <div key={month.name} className="text-xs text-slate-500 dark:text-slate-400 text-center pb-1" style={{gridColumn: `${month.colStart} / span 4`, gridRow: 1 }}>
-                        {month.name}
-                    </div>
-                ))}
-
-                {weekDays.map((day, i) => (
-                    <div key={day} className="text-xs text-slate-500 dark:text-slate-400 self-center" style={{gridRow: i + 2}}>
-                        {i % 2 !== 0 ? day : ''}
-                    </div>
-                ))}
-                {dateArray.map((date, i) => {
-                    const intensity = getIntensity(date);
-                    const dateString = formatDate(date);
-                    return (
-                        <div key={date.toISOString()} className="relative group aspect-square">
-                            <div className={`w-full h-full rounded-[3px] ${intensityClasses[intensity]}`}></div>
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max px-2 py-1 bg-slate-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                {dateString}: {completions[dateString]?.length || 0} completed
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-            <div className="flex justify-end items-center gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
-                <span>Less</span>
-                {intensityClasses.map((cls, i) => <div key={i} className={`w-3 h-3 rounded-sm ${cls}`}></div>)}
-                <span>More</span>
-            </div>
-        </div>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.grid}>
+                        {weeks.map((week, weekIndex) => (
+                            <View key={weekIndex} style={styles.column}>
+                                {week.map(date => {
+                                    const intensity = getIntensity(date);
+                                    return (
+                                        <View key={date.toISOString()} style={[styles.cell, { backgroundColor: intensityColors[intensity] }]} />
+                                    );
+                                })}
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
+            </View>
+            <View style={styles.legend}>
+                <Text style={styles.legendText}>Less</Text>
+                {intensityColors.map((color, i) => <View key={i} style={[styles.legendCell, { backgroundColor: color }]} />)}
+                <Text style={styles.legendText}>More</Text>
+            </View>
+        </View>
     );
 };
+
+interface ProgressCalendarProps {
+    habits: Habit[];
+    completions: Completions;
+    selectedHabitId: string | 'all';
+    onSelectHabit: (id: string | 'all') => void;
+    isDarkMode: boolean;
+}
+
+const getPickerStyles = (isDarkMode: boolean) => StyleSheet.create({
+    pickerButton: {
+        backgroundColor: isDarkMode ? '#334155' : '#f1f5f9',
+        borderWidth: 1,
+        borderColor: isDarkMode ? '#475569' : '#cbd5e1',
+        borderRadius: 6,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+    },
+    pickerButtonText: {
+        color: isDarkMode ? '#e2e8f0' : '#1e293b',
+        fontSize: 14,
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        backgroundColor: isDarkMode ? '#1e293b' : '#fff',
+        borderRadius: 8,
+        padding: 16,
+        width: '80%',
+        maxHeight: '60%',
+    },
+    option: {
+        paddingVertical: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: isDarkMode ? '#334155' : '#f1f5f9',
+    },
+    optionText: {
+        color: isDarkMode ? '#e2e8f0' : '#1e293b',
+        fontSize: 16,
+    }
+});
+
+const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+    container: { backgroundColor: isDarkMode ? '#1e293b' : '#fff', borderRadius: 8, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2, },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, },
+    title: { fontSize: 18, fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#1e293b', },
+    calendarContainer: { flexDirection: 'row', },
+    dayLabel: { fontSize: 12, color: '#64748b', flex: 1, textAlign: 'center' },
+    grid: { flexDirection: 'row', gap: 4, },
+    column: { gap: 4, },
+    cell: { width: 12, height: 12, borderRadius: 3, },
+    legend: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 16, },
+    legendText: { fontSize: 12, color: '#64748b', },
+    legendCell: { width: 12, height: 12, borderRadius: 2, },
+});
 
 export default ProgressCalendar;

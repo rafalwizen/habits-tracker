@@ -1,31 +1,31 @@
 import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
 import { PlusIcon } from './Icons';
 import { HABIT_COLORS, HabitColor, DEFAULT_HABIT_COLOR } from '../types';
 
 // A simple reusable color picker component
 const ColorPicker: React.FC<{ selectedColor: HabitColor; onSelectColor: (color: HabitColor) => void; }> = ({ selectedColor, onSelectColor }) => {
-    // Need to define color styles manually as Tailwind CDN can't handle dynamic classes
-    const colorClasses: Record<HabitColor, string> = {
-        emerald: 'bg-emerald-500',
-        sky: 'bg-sky-500',
-        indigo: 'bg-indigo-500',
-        rose: 'bg-rose-500',
-        amber: 'bg-amber-500',
-        violet: 'bg-violet-500',
+    const isDarkMode = useColorScheme() === 'dark';
+    const colorValues: Record<HabitColor, string> = {
+        emerald: '#10b981', sky: '#0ea5e9', indigo: '#6366f1',
+        rose: '#f43f5e', amber: '#f59e0b', violet: '#8b5cf6',
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-3">
+        <View style={styles.colorPickerContainer}>
             {HABIT_COLORS.map(color => (
-                <button
-                    type="button"
+                <TouchableOpacity
                     key={color}
-                    onClick={() => onSelectColor(color)}
-                    className={`w-7 h-7 rounded-full transition ${colorClasses[color]} ${selectedColor === color ? 'ring-2 ring-offset-2 dark:ring-offset-slate-800 ring-slate-900 dark:ring-white' : ''}`}
+                    onPress={() => onSelectColor(color)}
+                    style={[
+                        styles.colorButton,
+                        { backgroundColor: colorValues[color] },
+                        selectedColor === color && (isDarkMode ? styles.colorButtonSelectedDark : styles.colorButtonSelectedLight)
+                    ]}
                     aria-label={`Select color ${color}`}
                 />
             ))}
-        </div>
+        </View>
     );
 };
 
@@ -37,37 +37,109 @@ interface AddHabitFormProps {
 const AddHabitForm: React.FC<AddHabitFormProps> = ({ onAddHabit }) => {
     const [name, setName] = useState('');
     const [color, setColor] = useState<HabitColor>(DEFAULT_HABIT_COLOR);
+    const isDarkMode = useColorScheme() === 'dark';
+    const componentStyles = getStyles(isDarkMode);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         onAddHabit(name, color);
         setName('');
         setColor(DEFAULT_HABIT_COLOR);
     };
 
     return (
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow space-y-4">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Add New Habit</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                    type="text"
+        <View style={componentStyles.container}>
+            <Text style={componentStyles.title}>Add New Habit</Text>
+            <View style={componentStyles.form}>
+                <TextInput
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChangeText={setName}
                     placeholder="e.g., Meditate for 10 minutes"
-                    className="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+                    placeholderTextColor={isDarkMode ? '#94a3b8' : '#64748b'}
+                    style={componentStyles.input}
                 />
                 <ColorPicker selectedColor={color} onSelectColor={setColor} />
-                <button
-                    type="submit"
-                    className="w-full bg-emerald-500 text-white rounded-md px-4 py-2 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                <TouchableOpacity
+                    onPress={handleSubmit}
+                    style={[componentStyles.button, !name.trim() && componentStyles.buttonDisabled]}
                     disabled={!name.trim()}
                 >
                     <PlusIcon size={20} color="white" />
-                    <span>Add Habit</span>
-                </button>
-            </form>
-        </div>
+                    <Text style={componentStyles.buttonText}>Add Habit</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
+
+const styles = StyleSheet.create({
+    colorPickerContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 12,
+    },
+    colorButton: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+    },
+    colorButtonSelectedLight: {
+        borderWidth: 2,
+        borderColor: '#0f172a', // slate-900
+    },
+    colorButtonSelectedDark: {
+        borderWidth: 2,
+        borderColor: '#fff',
+    }
+});
+
+const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+    container: {
+        backgroundColor: isDarkMode ? '#1e293b' : '#fff', // dark:bg-slate-800
+        padding: 16,
+        borderRadius: 8,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2,
+        gap: 16,
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: isDarkMode ? '#e2e8f0' : '#1e293b', // dark:text-slate-200
+    },
+    form: {
+        gap: 16,
+    },
+    input: {
+        width: '100%',
+        backgroundColor: isDarkMode ? '#334155' : '#f1f5f9', // dark:bg-slate-700
+        color: isDarkMode ? '#e2e8f0' : '#1e293b', // dark:text-slate-200
+        borderWidth: 1,
+        borderColor: isDarkMode ? '#475569' : '#cbd5e1', // dark:border-slate-600
+        borderRadius: 6,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        fontSize: 16,
+    },
+    button: {
+        width: '100%',
+        backgroundColor: '#10b981', // emerald-500
+        borderRadius: 6,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 8,
+    },
+    buttonDisabled: {
+        opacity: 0.5,
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: '600',
+        fontSize: 16,
+    }
+});
+
 
 export default AddHabitForm;

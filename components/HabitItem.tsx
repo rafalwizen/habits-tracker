@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
 import { Habit, HabitColor } from '../types';
 import { CheckIcon, TrashIcon, PencilIcon } from './Icons';
 
@@ -10,52 +11,104 @@ interface HabitItemProps {
     onEdit: (habit: Habit) => void;
 }
 
+const colorValues: Record<HabitColor, { dot: string }> = {
+    emerald: { dot: '#10b981' }, sky: { dot: '#0ea5e9' }, indigo: { dot: '#6366f1' },
+    rose: { dot: '#f43f5e' }, amber: { dot: '#f59e0b' }, violet: { dot: '#8b5cf6' },
+};
+
 const HabitItem: React.FC<HabitItemProps> = ({ habit, isCompleted, onToggle, onDelete, onEdit }) => {
-    // Manually specify classes for Tailwind CDN
-    const colorClasses: Record<HabitColor, { dot: string }> = {
-        emerald: { dot: 'bg-emerald-500' },
-        sky: { dot: 'bg-sky-500' },
-        indigo: { dot: 'bg-indigo-500' },
-        rose: { dot: 'bg-rose-500' },
-        amber: { dot: 'bg-amber-500' },
-        violet: { dot: 'bg-violet-500' },
-    };
+    const isDarkMode = useColorScheme() === 'dark';
+    const styles = getStyles(isDarkMode, isCompleted);
+    const dotColor = colorValues[habit.color]?.dot || '#64748b'; // slate-500 fallback
 
     return (
-        <div className={`flex items-center justify-between p-3 rounded-md transition-all duration-200 ${isCompleted ? 'bg-emerald-50 dark:bg-emerald-900/50' : 'bg-slate-50 dark:bg-slate-700/50'}`}>
-            <button
-                onClick={() => onToggle(habit.id)}
-                className="flex items-center gap-3 flex-grow text-left"
+        <View style={styles.container}>
+            <TouchableOpacity
+                onPress={() => onToggle(habit.id)}
+                style={styles.mainButton}
                 aria-label={`Mark ${habit.name} as ${isCompleted ? 'incomplete' : 'complete'}`}
             >
-                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${isCompleted ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300 dark:border-slate-500'}`}>
+                <View style={styles.checkBox}>
                     {isCompleted && <CheckIcon size={16} color="white" />}
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${colorClasses[habit.color]?.dot || 'bg-slate-500'}`}></div>
-                    <span className={`text-slate-700 dark:text-slate-200 ${isCompleted ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
-                {habit.name}
-            </span>
-                </div>
-            </button>
-            <div className="flex items-center flex-shrink-0">
-                <button
-                    onClick={() => onEdit(habit)}
+                </View>
+                <View style={styles.nameContainer}>
+                    <View style={[styles.colorDot, { backgroundColor: dotColor }]}></View>
+                    <Text style={styles.nameText}>
+                        {habit.name}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+            <View style={styles.actionsContainer}>
+                <TouchableOpacity
+                    onPress={() => onEdit(habit)}
                     aria-label={`Edit habit: ${habit.name}`}
-                    className="text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 p-1 rounded-full transition"
+                    style={styles.iconButton}
                 >
                     <PencilIcon size={20} color="#94a3b8" />
-                </button>
-                <button
-                    onClick={() => onDelete(habit.id)}
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => onDelete(habit.id)}
                     aria-label={`Delete habit: ${habit.name}`}
-                    className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-full transition"
+                    style={styles.iconButton}
                 >
                     <TrashIcon size={20} color="#94a3b8" />
-                </button>
-            </div>
-        </div>
+                </TouchableOpacity>
+            </View>
+        </View>
     );
 };
+
+const getStyles = (isDarkMode: boolean, isCompleted: boolean) => StyleSheet.create({
+    container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 12,
+        borderRadius: 6,
+        backgroundColor: isCompleted
+            ? (isDarkMode ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5') // emerald-900/50 or emerald-50
+            : (isDarkMode ? 'rgba(51, 65, 85, 0.5)' : '#f8fafc'), // slate-700/50 or slate-50
+    },
+    mainButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        flex: 1,
+    },
+    checkBox: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderColor: isCompleted ? '#10b981' : (isDarkMode ? '#64748b' : '#cbd5e1'),
+        backgroundColor: isCompleted ? '#10b981' : 'transparent',
+    },
+    nameContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    colorDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+    },
+    nameText: {
+        color: isCompleted
+            ? (isDarkMode ? '#64748b' : '#94a3b8') // dark:text-slate-500 or text-slate-400
+            : (isDarkMode ? '#e2e8f0' : '#334155'), // dark:text-slate-200 or text-slate-700
+        textDecorationLine: isCompleted ? 'line-through' : 'none',
+        fontSize: 16,
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconButton: {
+        padding: 4,
+    }
+});
 
 export default HabitItem;

@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { View, Text, Modal, TextInput, TouchableOpacity, StyleSheet, useColorScheme, Pressable } from 'react-native';
 import { Habit, HABIT_COLORS, HabitColor } from '../types';
 
-// A simple reusable color picker component
 const ColorPicker: React.FC<{ selectedColor: HabitColor; onSelectColor: (color: HabitColor) => void; }> = ({ selectedColor, onSelectColor }) => {
-    const colorClasses: Record<HabitColor, string> = {
-        emerald: 'bg-emerald-500',
-        sky: 'bg-sky-500',
-        indigo: 'bg-indigo-500',
-        rose: 'bg-rose-500',
-        amber: 'bg-amber-500',
-        violet: 'bg-violet-500',
+    const isDarkMode = useColorScheme() === 'dark';
+    const colorValues: Record<HabitColor, string> = {
+        emerald: '#10b981', sky: '#0ea5e9', indigo: '#6366f1',
+        rose: '#f43f5e', amber: '#f59e0b', violet: '#8b5cf6',
     };
 
     return (
-        <div className="flex flex-wrap items-center gap-3">
+        <View style={styles.colorPickerContainer}>
             {HABIT_COLORS.map(color => (
-                <button
-                    type="button"
+                <TouchableOpacity
                     key={color}
-                    onClick={() => onSelectColor(color)}
-                    className={`w-7 h-7 rounded-full transition ${colorClasses[color]} ${selectedColor === color ? 'ring-2 ring-offset-2 dark:ring-offset-slate-800 ring-slate-900 dark:ring-white' : ''}`}
+                    onPress={() => onSelectColor(color)}
+                    style={[
+                        styles.colorButton,
+                        { backgroundColor: colorValues[color] },
+                        selectedColor === color && (isDarkMode ? styles.colorButtonSelectedDark : styles.colorButtonSelectedLight)
+                    ]}
                     aria-label={`Select color ${color}`}
                 />
             ))}
-        </div>
+        </View>
     );
 };
 
@@ -37,71 +37,90 @@ interface EditHabitModalProps {
 const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClose }) => {
     const [name, setName] = useState(habit.name);
     const [color, setColor] = useState<HabitColor>(habit.color);
+    const isDarkMode = useColorScheme() === 'dark';
+    const componentStyles = getStyles(isDarkMode);
 
     useEffect(() => {
         setName(habit.name);
         setColor(habit.color);
     }, [habit]);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = () => {
         if (name.trim()) {
             onUpdate(habit.id, name, color);
         }
     };
 
     return (
-        <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 flex items-center justify-center p-4"
-            onClick={onClose}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-habit-title"
+        <Modal
+            transparent={true}
+            visible={true}
+            onRequestClose={onClose}
+            animationType="fade"
         >
-            <div
-                className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-sm"
-                onClick={(e) => e.stopPropagation()}
+            <Pressable
+                style={componentStyles.overlay}
+                onPress={onClose}
             >
-                <h2 id="edit-habit-title" className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-100">Edit Habit</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label htmlFor="habit-name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                            Habit Name
-                        </label>
-                        <input
-                            id="habit-name"
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Color
-                        </label>
-                        <ColorPicker selectedColor={color} onSelectColor={setColor} />
-                    </div>
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md px-4 py-2 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="bg-emerald-500 text-white rounded-md px-4 py-2 font-semibold hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition disabled:opacity-50"
-                            disabled={!name.trim()}
-                        >
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <Pressable style={componentStyles.modalContainer}>
+                    <Text style={componentStyles.title}>Edit Habit</Text>
+                    <View style={componentStyles.form}>
+                        <View>
+                            <Text style={componentStyles.label}>Habit Name</Text>
+                            <TextInput
+                                value={name}
+                                onChangeText={setName}
+                                style={componentStyles.input}
+                            />
+                        </View>
+                        <View>
+                            <Text style={componentStyles.label}>Color</Text>
+                            <ColorPicker selectedColor={color} onSelectColor={setColor} />
+                        </View>
+                        <View style={componentStyles.buttonContainer}>
+                            <TouchableOpacity
+                                onPress={onClose}
+                                style={[componentStyles.button, componentStyles.cancelButton]}
+                            >
+                                <Text style={componentStyles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleSubmit}
+                                style={[componentStyles.button, componentStyles.saveButton, !name.trim() && componentStyles.buttonDisabled]}
+                                disabled={!name.trim()}
+                            >
+                                <Text style={componentStyles.saveButtonText}>Save Changes</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Pressable>
+            </Pressable>
+        </Modal>
     );
 };
+
+const styles = StyleSheet.create({
+    colorPickerContainer: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12, },
+    colorButton: { width: 28, height: 28, borderRadius: 14, },
+    colorButtonSelectedLight: { borderWidth: 2, borderColor: '#0f172a', }, // slate-900
+    colorButtonSelectedDark: { borderWidth: 2, borderColor: '#fff', }
+});
+
+const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+    overlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 16, },
+    modalContainer: { backgroundColor: isDarkMode ? '#1e293b' : '#fff', borderRadius: 8, padding: 24, width: '100%', maxWidth: 400, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 3.84, elevation: 5, },
+    title: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: isDarkMode ? '#f1f5f9' : '#1e293b', },
+    form: { gap: 24, },
+    label: { fontSize: 14, fontWeight: '500', color: isDarkMode ? '#cbd5e1' : '#334155', marginBottom: 4, },
+    input: { width: '100%', backgroundColor: isDarkMode ? '#334155' : '#f1f5f9', color: isDarkMode ? '#e2e8f0' : '#1e293b', borderWidth: 1, borderColor: isDarkMode ? '#475569' : '#cbd5e1', borderRadius: 6, paddingVertical: 8, paddingHorizontal: 12, fontSize: 16, },
+    buttonContainer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, paddingTop: 8, },
+    button: { borderRadius: 6, paddingVertical: 10, paddingHorizontal: 16, },
+    buttonDisabled: { opacity: 0.5 },
+    cancelButton: { backgroundColor: isDarkMode ? '#334155' : '#e2e8f0' },
+    cancelButtonText: { color: isDarkMode ? '#e2e8f0' : '#1e293b', fontWeight: '600' },
+    saveButton: { backgroundColor: '#10b981' },
+    saveButtonText: { color: '#fff', fontWeight: '600' },
+});
+
 
 export default EditHabitModal;

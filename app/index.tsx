@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { ScrollView, View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Habit, Completions, HabitColor } from '../types';
 import { getTodayDateString } from '../utils/date';
@@ -12,6 +13,9 @@ const HomePage: React.FC = () => {
     const [completions, setCompletions] = useLocalStorage<Completions>('completions', {});
     const [selectedHabitId, setSelectedHabitId] = useState<string | 'all'>('all');
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+
+    const { width } = useWindowDimensions();
+    const isLargeScreen = width >= 1024; // Tailwind 'lg' breakpoint
 
     const today = useMemo(() => getTodayDateString(), []);
 
@@ -78,30 +82,34 @@ const HomePage: React.FC = () => {
         return filtered;
     }, [completions, selectedHabitId]);
 
+    const mainContent = (
+        <View style={[styles.mainGrid, isLargeScreen && styles.mainGridLarge]}>
+            <View style={[styles.leftColumn, isLargeScreen && styles.leftColumnLarge]}>
+                <AddHabitForm onAddHabit={addHabit} />
+                <HabitList
+                    habits={habits}
+                    completions={completions[today] || []}
+                    onToggle={id => toggleHabit(id, today)}
+                    onDelete={deleteHabit}
+                    onEdit={setEditingHabit}
+                />
+            </View>
+            <View style={[styles.rightColumn, isLargeScreen && styles.rightColumnLarge]}>
+                <ProgressCalendar
+                    habits={habits}
+                    completions={filteredCompletions}
+                    selectedHabitId={selectedHabitId}
+                    onSelectHabit={setSelectedHabitId}
+                />
+            </View>
+        </View>
+    );
+
     return (
         <>
-            <main className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-1 space-y-6">
-                        <AddHabitForm onAddHabit={addHabit} />
-                        <HabitList
-                            habits={habits}
-                            completions={completions[today] || []}
-                            onToggle={id => toggleHabit(id, today)}
-                            onDelete={deleteHabit}
-                            onEdit={setEditingHabit}
-                        />
-                    </div>
-                    <div className="lg:col-span-2">
-                        <ProgressCalendar
-                            habits={habits}
-                            completions={filteredCompletions}
-                            selectedHabitId={selectedHabitId}
-                            onSelectHabit={setSelectedHabitId}
-                        />
-                    </div>
-                </div>
-            </main>
+            <ScrollView contentContainerStyle={styles.container}>
+                {mainContent}
+            </ScrollView>
             {editingHabit && (
                 <EditHabitModal
                     habit={editingHabit}
@@ -112,5 +120,31 @@ const HomePage: React.FC = () => {
         </>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 16,
+        maxWidth: 1024,
+        width: '100%',
+        alignSelf: 'center',
+    },
+    mainGrid: {
+        gap: 32,
+    },
+    mainGridLarge: {
+        flexDirection: 'row',
+    },
+    leftColumn: {
+        gap: 24,
+    },
+    leftColumnLarge: {
+        flex: 1,
+    },
+    rightColumn: {},
+    rightColumnLarge: {
+        flex: 2,
+    }
+});
+
 
 export default HomePage;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { SafeAreaView, View, Text, StyleSheet, useColorScheme, StatusBar, Platform } from 'react-native';
 import Header from '../components/Header';
 
 interface RootLayoutProps {
@@ -6,15 +7,43 @@ interface RootLayoutProps {
 }
 
 const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
+    const colorScheme = useColorScheme();
+    const isDarkMode = colorScheme === 'dark';
+
+    const styles = getStyles(isDarkMode);
+
     return (
-        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
-            <Header />
-            {children}
-            <footer className="text-center p-4 mt-8 text-slate-500 text-sm">
-                <p>Built with ❤️ by a world-class React engineer.</p>
-            </footer>
-        </div>
+        <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+            <View style={styles.container}>
+                <Header />
+                {children}
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>Built with ❤️ by a world-class React engineer.</Text>
+                </View>
+            </View>
+        </SafeAreaView>
     );
 };
+
+const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9', // slate-900 or slate-100
+    },
+    container: {
+        flex: 1,
+    },
+    footer: {
+        padding: 16,
+        marginTop: 32,
+        alignItems: 'center',
+    },
+    footerText: {
+        fontSize: 12,
+        color: '#64748b' // slate-500
+    }
+});
+
 
 export default RootLayout;
