@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Habit, Completions, HabitColor } from '../types';
-import { getTodayDateString } from '../utils/date';
-import AddHabitForm from '../components/AddHabitForm';
-import HabitList from '../components/HabitList';
-import ProgressCalendar from '../components/ProgressCalendar';
-import EditHabitModal from '../components/EditHabitModal';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { Habit, Completions, HabitColor } from './types';
+import { getTodayDateString } from './utils/date';
+import Header from './components/Header';
+import AddHabitForm from './components/AddHabitForm';
+import HabitList from './components/HabitList';
+import ProgressCalendar from './components/ProgressCalendar';
+import EditHabitModal from './components/EditHabitModal';
 
-const HomePage: React.FC = () => {
+const App: React.FC = () => {
     const [habits, setHabits] = useLocalStorage<Habit[]>('habits', []);
     const [completions, setCompletions] = useLocalStorage<Completions>('completions', {});
     const [selectedHabitId, setSelectedHabitId] = useState<string | 'all'>('all');
@@ -79,7 +80,8 @@ const HomePage: React.FC = () => {
     }, [completions, selectedHabitId]);
 
     return (
-        <>
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+            <Header />
             <main className="max-w-4xl mx-auto p-4 md:p-6 lg:p-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-1 space-y-6">
@@ -109,8 +111,11 @@ const HomePage: React.FC = () => {
                     onClose={() => setEditingHabit(null)}
                 />
             )}
-        </>
+            <footer className="text-center p-4 mt-8 text-slate-500 text-sm">
+                <p>Built with ❤️ by a world-class React engineer.</p>
+            </footer>
+        </div>
     );
 };
 
-export default HomePage;
+export default App;
