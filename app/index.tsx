@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Habit, Completions, HabitColor } from '@/types';
 import { getTodayDateString } from '@/utils/date';
+import { generateId } from '@/utils/generateId';
 import AddHabitForm from '../components/AddHabitForm';
 import HabitList from '../components/HabitList';
 import ProgressCalendar from '../components/ProgressCalendar';
@@ -19,7 +20,7 @@ const HomePage: React.FC = () => {
     const addHabit = (name: string, color: HabitColor) => {
         if (name.trim() === '') return;
         const newHabit: Habit = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             name: name.trim(),
             createdAt: new Date().toISOString(),
             color: color,
