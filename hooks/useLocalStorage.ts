@@ -1,29 +1,39 @@
-// Fix: Import `Dispatch` and `SetStateAction` types to resolve namespace error.
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Fix: Use imported types for the hook's return value instead of the `React` namespace.
-export function useLocalStorage<T,>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
-    const [storedValue, setStoredValue] = useState<T>(() => {
-        try {
-            const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : initialValue;
-        } catch (error) {
-            console.error(error);
-            return initialValue;
-        }
-    });
+export function useLocalStorage<T>(
+    key: string,
+    initialValue: T
+): [T, Dispatch<SetStateAction<T>>] {
+    const [storedValue, setStoredValue] = useState<T>(initialValue);
 
     useEffect(() => {
-        try {
-            const valueToStore =
-                typeof storedValue === 'function'
-                    ? storedValue(storedValue)
-                    : storedValue;
-            window.localStorage.setItem(key, JSON.stringify(valueToStore));
-        } catch (error) {
-            console.error(error);
-        }
-    }, [key, storedValue]);
+        const loadStoredValue = async () => {
+            try {
+                const item = await AsyncStorage.getItem(key);
+                if (item !== null) {
+                    setStoredValue(JSON.parse(item));
+                } else {
+                    setStoredValue(initialValue);
+                }
+            } catch (error) {
+                console.error(`Error reading value for key "${key}" from AsyncStorage:`, error);
+                setStoredValue(initialValue);
+            }
+        };
 
-    return [storedValue, setStoredValue];
+        loadStoredValue();
+    }, [key, initialValue]);
+
+    const setValue: Dispatch<SetStateAction<T>> = (value) => {
+        try {
+            const valueToStore = value instanceof Function ? value(storedValue) : value;
+            setStoredValue(valueToStore);
+            AsyncStorage.setItem(key, JSON.stringify(valueToStore));
+        } catch (error) {
+            console.error(`Error saving value for key "${key}" to AsyncStorage:`, error);
+        }
+    };
+
+    return [storedValue, setValue];
 }

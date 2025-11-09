@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useColorScheme } from 'react-native';
-import { Habit, HabitColor } from '../types';
+import { Habit, HabitColor } from '@/types';
 import { CheckIcon, TrashIcon, PencilIcon } from './Icons';
+import { Colors } from '@/constants/Colors';
 
 interface HabitItemProps {
     habit: Habit;
@@ -11,68 +12,91 @@ interface HabitItemProps {
     onEdit: (habit: Habit) => void;
 }
 
-const colorValues: Record<HabitColor, { dot: string }> = {
-    emerald: { dot: '#10b981' }, sky: { dot: '#0ea5e9' }, indigo: { dot: '#6366f1' },
-    rose: { dot: '#f43f5e' }, amber: { dot: '#f59e0b' }, violet: { dot: '#8b5cf6' },
+const colorClasses: Record<HabitColor, { bg: string, dot: string }> = {
+    emerald: { bg: 'rgba(16, 185, 129, 0.1)', dot: Colors.emerald },
+    sky: { bg: 'rgba(14, 165, 233, 0.1)', dot: Colors.sky },
+    indigo: { bg: 'rgba(99, 102, 241, 0.1)', dot: Colors.indigo },
+    rose: { bg: 'rgba(244, 63, 94, 0.1)', dot: Colors.rose },
+    amber: { bg: 'rgba(245, 158, 11, 0.1)', dot: Colors.amber },
+    violet: { bg: 'rgba(139, 92, 246, 0.1)', dot: Colors.violet },
 };
 
 const HabitItem: React.FC<HabitItemProps> = ({ habit, isCompleted, onToggle, onDelete, onEdit }) => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const styles = getStyles(isDarkMode, isCompleted);
-    const dotColor = colorValues[habit.color]?.dot || '#64748b'; // slate-500 fallback
+    const habitColor = colorClasses[habit.color] || colorClasses.emerald;
+    const colorScheme = useColorScheme() ?? 'light';
+    const isDarkMode = colorScheme === 'dark';
+
+    // Fix: Explicitly type `textDecorationLine` to prevent TypeScript from inferring it as a generic `string`.
+    const textDecorationLineStyle: 'line-through' | 'none' = isCompleted ? 'line-through' : 'none';
+
+    const dynamicStyles = {
+        container: {
+            backgroundColor: isCompleted ? habitColor.bg : (isDarkMode ? Colors.dark.cardMuted : Colors.light.cardMuted),
+        },
+        checkBox: {
+            borderColor: isCompleted ? Colors.emerald : (isDarkMode ? Colors.dark.border : Colors.light.border),
+            backgroundColor: isCompleted ? Colors.emerald : 'transparent',
+        },
+        text: {
+            color: isCompleted ? (isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary) : (isDarkMode ? Colors.dark.text : Colors.light.text),
+            textDecorationLine: textDecorationLineStyle,
+        },
+        icon: {
+            color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary,
+        },
+        deleteIcon: {
+            color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary,
+        }
+    };
+
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, dynamicStyles.container]}>
             <TouchableOpacity
                 onPress={() => onToggle(habit.id)}
                 style={styles.mainButton}
                 aria-label={`Mark ${habit.name} as ${isCompleted ? 'incomplete' : 'complete'}`}
             >
-                <View style={styles.checkBox}>
-                    {isCompleted && <CheckIcon size={16} color="white" />}
+                <View style={[styles.checkBox, dynamicStyles.checkBox]}>
+                    {isCompleted && <CheckIcon size={16} color="#FFF" />}
                 </View>
-                <View style={styles.nameContainer}>
-                    <View style={[styles.colorDot, { backgroundColor: dotColor }]}></View>
-                    <Text style={styles.nameText}>
+                <View style={styles.habitInfo}>
+                    <View style={[styles.colorDot, { backgroundColor: habitColor.dot }]} />
+                    <Text style={[styles.text, dynamicStyles.text]}>
                         {habit.name}
                     </Text>
                 </View>
             </TouchableOpacity>
-            <View style={styles.actionsContainer}>
+            <View style={styles.actions}>
                 <TouchableOpacity
                     onPress={() => onEdit(habit)}
                     aria-label={`Edit habit: ${habit.name}`}
-                    style={styles.iconButton}
+                    style={styles.actionButton}
                 >
-                    <PencilIcon size={20} color="#94a3b8" />
+                    <PencilIcon size={20} color={dynamicStyles.icon.color} />
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => onDelete(habit.id)}
                     aria-label={`Delete habit: ${habit.name}`}
-                    style={styles.iconButton}
+                    style={styles.actionButton}
                 >
-                    <TrashIcon size={20} color="#94a3b8" />
+                    <TrashIcon size={20} color={dynamicStyles.deleteIcon.color} />
                 </TouchableOpacity>
             </View>
         </View>
     );
 };
 
-const getStyles = (isDarkMode: boolean, isCompleted: boolean) => StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: 12,
         borderRadius: 6,
-        backgroundColor: isCompleted
-            ? (isDarkMode ? 'rgba(16, 185, 129, 0.2)' : '#ecfdf5') // emerald-900/50 or emerald-50
-            : (isDarkMode ? 'rgba(51, 65, 85, 0.5)' : '#f8fafc'), // slate-700/50 or slate-50
     },
     mainButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 12,
         flex: 1,
     },
     checkBox: {
@@ -82,31 +106,29 @@ const getStyles = (isDarkMode: boolean, isCompleted: boolean) => StyleSheet.crea
         borderWidth: 2,
         alignItems: 'center',
         justifyContent: 'center',
-        borderColor: isCompleted ? '#10b981' : (isDarkMode ? '#64748b' : '#cbd5e1'),
-        backgroundColor: isCompleted ? '#10b981' : 'transparent',
+        marginRight: 12,
     },
-    nameContainer: {
+    habitInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        flex: 1,
     },
     colorDot: {
         width: 10,
         height: 10,
         borderRadius: 5,
+        marginRight: 8,
     },
-    nameText: {
-        color: isCompleted
-            ? (isDarkMode ? '#64748b' : '#94a3b8') // dark:text-slate-500 or text-slate-400
-            : (isDarkMode ? '#e2e8f0' : '#334155'), // dark:text-slate-200 or text-slate-700
-        textDecorationLine: isCompleted ? 'line-through' : 'none',
+    text: {
         fontSize: 16,
     },
-    actionsContainer: {
+    actions: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 4,
+        marginLeft: 8,
     },
-    iconButton: {
+    actionButton: {
         padding: 4,
     }
 });

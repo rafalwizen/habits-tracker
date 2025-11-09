@@ -1,73 +1,39 @@
 import React, { useState } from 'react';
-// Fix: Import ScrollView which was missing.
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, Modal, FlatList, Pressable, ScrollView } from 'react-native';
-import { Completions, Habit, HabitColor } from '../types';
-import { formatDate } from '../utils/date';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, FlatList, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Completions, Habit, HabitColor } from '@/types';
+import { formatDate } from '@/utils/date';
+import { Colors } from '@/constants/Colors';
+import { CheckIcon } from './Icons';
 
-// Define color schemes for the calendar heatmap
+
 const colorSchemes: Record<HabitColor, string[]> = {
-    emerald: ['#a7f3d0', '#6ee7b7', '#34d399', '#10b981'],
-    sky: ['#bae6fd', '#7dd3fc', '#38bdf8', '#0ea5e9'],
-    indigo: ['#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1'],
-    rose: ['#fecdd3', '#fda4af', '#fb7185', '#f43f5e'],
-    amber: ['#fde68a', '#fcd34d', '#fbbf24', '#f59e0b'],
-    violet: ['#ddd6fe', '#c4b5fd', '#a78bfa', '#8b5cf6'],
+    emerald: [Colors.emerald_tint_1, Colors.emerald_tint_2, Colors.emerald_tint_3, Colors.emerald],
+    sky: [Colors.sky_tint_1, Colors.sky_tint_2, Colors.sky_tint_3, Colors.sky],
+    indigo: [Colors.indigo_tint_1, Colors.indigo_tint_2, Colors.indigo_tint_3, Colors.indigo],
+    rose: [Colors.rose_tint_1, Colors.rose_tint_2, Colors.rose_tint_3, Colors.rose],
+    amber: [Colors.amber_tint_1, Colors.amber_tint_2, Colors.amber_tint_3, Colors.amber],
+    violet: [Colors.violet_tint_1, Colors.violet_tint_2, Colors.violet_tint_3, Colors.violet],
 };
 
-const HabitPicker: React.FC<{ habits: Habit[], selectedHabitId: string | 'all', onSelectHabit: (id: string | 'all') => void, isDarkMode: boolean }> = ({ habits, selectedHabitId, onSelectHabit, isDarkMode }) => {
-    const [modalVisible, setModalVisible] = useState(false);
-    const styles = getPickerStyles(isDarkMode);
-
-    const selectedHabitName = selectedHabitId === 'all'
-        ? 'All Habits'
-        : habits.find(h => h.id === selectedHabitId)?.name;
-
-    // Fix: Widen the type of `item` to match what FlatList infers due to type widening of string literals.
-    const renderItem = ({ item }: { item: Habit | { id: string; name: string; } }) => (
-        <TouchableOpacity
-            style={styles.option}
-            onPress={() => {
-                onSelectHabit(item.id);
-                setModalVisible(false);
-            }}>
-            <Text style={styles.optionText}>{item.name}</Text>
-        </TouchableOpacity>
-    );
-
-    return (
-        <>
-            <TouchableOpacity style={styles.pickerButton} onPress={() => setModalVisible(true)}>
-                <Text style={styles.pickerButtonText}>{selectedHabitName}</Text>
-            </TouchableOpacity>
-            <Modal
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-                    <View style={styles.modalContent}>
-                        <FlatList
-                            data={[{ id: 'all', name: 'All Habits' }, ...habits]}
-                            renderItem={renderItem}
-                            keyExtractor={item => item.id}
-                        />
-                    </View>
-                </Pressable>
-            </Modal>
-        </>
-    );
+interface ProgressCalendarProps {
+    habits: Habit[];
+    completions: Completions;
+    selectedHabitId: string | 'all';
+    onSelectHabit: (id: string | 'all') => void;
 }
 
-const ProgressCalendar: React.FC<Omit<ProgressCalendarProps, 'isDarkMode'>> = ({ habits, completions, selectedHabitId, onSelectHabit }) => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const styles = getStyles(isDarkMode);
+const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions, selectedHabitId, onSelectHabit }) => {
+    const [modalVisible, setModalVisible] = useState(false);
+    const colorScheme = useColorScheme() ?? 'light';
+    const isDarkMode = colorScheme === 'dark';
 
     const today = new Date();
     const endDate = new Date(today);
-    endDate.setDate(endDate.getDate() + (6 - today.getDay())); // end of week
+    endDate.setDate(endDate.getDate() + (6 - today.getDay()));
 
     const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - 83); // ~12 weeks
+    startDate.setDate(startDate.getDate() - 83);
 
     const dateArray: Date[] = [];
     let currentDate = new Date(startDate);
@@ -77,19 +43,24 @@ const ProgressCalendar: React.FC<Omit<ProgressCalendarProps, 'isDarkMode'>> = ({
     }
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
     const selectedHabit = habits.find(h => h.id === selectedHabitId);
     const habitColor = selectedHabit?.color || 'emerald';
 
-    const baseIntensityColor = isDarkMode ? '#334155' : '#e2e8f0'; // slate-700 or slate-200
+    const baseIntensityClass = isDarkMode ? Colors.dark.cardMuted : Colors.light.cardMuted;
     const currentScheme = colorSchemes[habitColor] || colorSchemes.emerald;
 
-    const intensityColors = [baseIntensityColor, ...currentScheme];
+    const intensityClasses = [baseIntensityClass, ...currentScheme];
 
     const getIntensity = (date: Date) => {
         const dateString = formatDate(date);
         const completionCount = completions[dateString]?.length || 0;
         if (completionCount === 0) return 0;
-        if (selectedHabitId !== 'all') return completionCount > 0 ? 4 : 0;
+
+        if (selectedHabitId !== 'all') {
+            return completions[dateString]?.includes(selectedHabitId) ? 4 : 0;
+        }
+
         if (habits.length === 0) return 0;
         const percentage = completionCount / habits.length;
         if (percentage < 0.25) return 1;
@@ -98,108 +69,106 @@ const ProgressCalendar: React.FC<Omit<ProgressCalendarProps, 'isDarkMode'>> = ({
         return 4;
     };
 
-    const weeks = dateArray.reduce((acc, date, i) => {
-        if (i % 7 === 0) acc.push([]);
-        acc[acc.length - 1].push(date);
-        return acc;
-    }, [] as Date[][]);
+    const dynamicStyles = {
+        container: { backgroundColor: isDarkMode ? Colors.dark.card : Colors.light.card },
+        title: { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+        pickerButton: { backgroundColor: isDarkMode ? Colors.dark.input : Colors.light.input, borderColor: isDarkMode ? Colors.dark.border : Colors.light.border },
+        pickerText: { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+        weekdayText: { color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary },
+        legendText: { color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary },
+        modalView: { backgroundColor: isDarkMode ? Colors.dark.card : Colors.light.card },
+        modalTitle: { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+        optionText: { color: isDarkMode ? Colors.dark.text : Colors.light.text },
+        separator: { backgroundColor: isDarkMode ? Colors.dark.border : Colors.light.border },
+        closeButton: { backgroundColor: isDarkMode ? Colors.dark.input : Colors.light.input },
+        closeButtonText: { color: isDarkMode ? Colors.dark.text : Colors.light.text }
+    };
+
+    const PickerModal = () => (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+        >
+            <SafeAreaView style={styles.modalContainer}>
+                <View style={[styles.modalView, dynamicStyles.modalView]}>
+                    <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>Select Habit</Text>
+                    <FlatList
+                        data={[{ id: 'all', name: 'All Habits' }, ...habits]}
+                        keyExtractor={(item) => item.id}
+                        ItemSeparatorComponent={() => <View style={[styles.separator, dynamicStyles.separator]} />}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity style={styles.option} onPress={() => {
+                                onSelectHabit(item.id);
+                                setModalVisible(false);
+                            }}>
+                                <Text style={[styles.optionText, dynamicStyles.optionText]}>{item.name}</Text>
+                                {selectedHabitId === item.id && <CheckIcon size={20} color={Colors.emerald} />}
+                            </TouchableOpacity>
+                        )}
+                    />
+                    <TouchableOpacity style={[styles.closeButton, dynamicStyles.closeButton]} onPress={() => setModalVisible(false)}>
+                        <Text style={[styles.closeButtonText, dynamicStyles.closeButtonText]}>Close</Text>
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </Modal>
+    );
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, dynamicStyles.container]}>
+            <PickerModal />
             <View style={styles.header}>
-                <Text style={styles.title}>Progress</Text>
-                <HabitPicker habits={habits} selectedHabitId={selectedHabitId} onSelectHabit={onSelectHabit} isDarkMode={isDarkMode}/>
+                <Text style={[styles.title, dynamicStyles.title]}>Progress</Text>
+                <TouchableOpacity style={[styles.pickerButton, dynamicStyles.pickerButton]} onPress={() => setModalVisible(true)}>
+                    <Text style={[styles.pickerText, dynamicStyles.pickerText]}>{selectedHabit ? selectedHabit.name : 'All Habits'}</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.calendarContainer}>
-                <View>
-                    {weekDays.map((day, i) => (
-                        <Text key={day} style={styles.dayLabel}>
-                            {i % 2 !== 0 ? day : ''}
-                        </Text>
-                    ))}
+                <View style={styles.weekdaysContainer}>
+                    {weekDays.map((day, i) => <Text key={day} style={[styles.weekdayText, dynamicStyles.weekdayText, { opacity: i % 2 !== 0 ? 1 : 0 }]}>{day}</Text>)}
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={styles.grid}>
-                        {weeks.map((week, weekIndex) => (
-                            <View key={weekIndex} style={styles.column}>
-                                {week.map(date => {
-                                    const intensity = getIntensity(date);
-                                    return (
-                                        <View key={date.toISOString()} style={[styles.cell, { backgroundColor: intensityColors[intensity] }]} />
-                                    );
-                                })}
-                            </View>
+                        {dateArray.map(date => (
+                            <View key={date.toISOString()} style={[styles.dayCell, { backgroundColor: intensityClasses[getIntensity(date)] }]} />
                         ))}
                     </View>
                 </ScrollView>
             </View>
             <View style={styles.legend}>
-                <Text style={styles.legendText}>Less</Text>
-                {intensityColors.map((color, i) => <View key={i} style={[styles.legendCell, { backgroundColor: color }]} />)}
-                <Text style={styles.legendText}>More</Text>
+                <Text style={[styles.legendText, dynamicStyles.legendText]}>Less</Text>
+                {intensityClasses.map((c, i) => <View key={i} style={[styles.legendCell, {backgroundColor: c}]} />)}
+                <Text style={[styles.legendText, dynamicStyles.legendText]}>More</Text>
             </View>
         </View>
     );
 };
 
-interface ProgressCalendarProps {
-    habits: Habit[];
-    completions: Completions;
-    selectedHabitId: string | 'all';
-    onSelectHabit: (id: string | 'all') => void;
-    isDarkMode: boolean;
-}
-
-const getPickerStyles = (isDarkMode: boolean) => StyleSheet.create({
-    pickerButton: {
-        backgroundColor: isDarkMode ? '#334155' : '#f1f5f9',
-        borderWidth: 1,
-        borderColor: isDarkMode ? '#475569' : '#cbd5e1',
-        borderRadius: 6,
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-    },
-    pickerButtonText: {
-        color: isDarkMode ? '#e2e8f0' : '#1e293b',
-        fontSize: 14,
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContent: {
-        backgroundColor: isDarkMode ? '#1e293b' : '#fff',
-        borderRadius: 8,
-        padding: 16,
-        width: '80%',
-        maxHeight: '60%',
-    },
-    option: {
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: isDarkMode ? '#334155' : '#f1f5f9',
-    },
-    optionText: {
-        color: isDarkMode ? '#e2e8f0' : '#1e293b',
-        fontSize: 16,
-    }
-});
-
-const getStyles = (isDarkMode: boolean) => StyleSheet.create({
-    container: { backgroundColor: isDarkMode ? '#1e293b' : '#fff', borderRadius: 8, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2, },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, },
-    title: { fontSize: 18, fontWeight: '600', color: isDarkMode ? '#e2e8f0' : '#1e293b', },
-    calendarContainer: { flexDirection: 'row', },
-    dayLabel: { fontSize: 12, color: '#64748b', flex: 1, textAlign: 'center' },
-    grid: { flexDirection: 'row', gap: 4, },
-    column: { gap: 4, },
-    cell: { width: 12, height: 12, borderRadius: 3, },
-    legend: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 16, },
-    legendText: { fontSize: 12, color: '#64748b', },
-    legendCell: { width: 12, height: 12, borderRadius: 2, },
+const styles = StyleSheet.create({
+    container: { padding: 16, borderRadius: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    title: { fontSize: 18, fontWeight: '600' },
+    pickerButton: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 6 },
+    pickerText: { fontSize: 14 },
+    calendarContainer: { flexDirection: 'row', gap: 10 },
+    weekdaysContainer: { gap: 6 },
+    weekdayText: { fontSize: 12, height: 12 },
+    grid: { height: 12 * 7 + 6 * 6, flexDirection: 'column', flexWrap: 'wrap', gap: 6 },
+    dayCell: { width: 12, height: 12, borderRadius: 2 },
+    legend: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 4, marginTop: 8 },
+    legendText: { fontSize: 12 },
+    legendCell: { width: 12, height: 12, borderRadius: 2 },
+    modalContainer: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+    modalView: { borderTopLeftRadius: 12, borderTopRightRadius: 12, padding: 16, maxHeight: '50%' },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+    option: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 16, alignItems: 'center' },
+    optionText: { fontSize: 18 },
+    separator: { height: 1 },
+    closeButton: { marginTop: 16, padding: 16, borderRadius: 8, alignItems: 'center' },
+    closeButtonText: { fontSize: 18, fontWeight: '600' }
 });
 
 export default ProgressCalendar;

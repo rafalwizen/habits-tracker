@@ -1,49 +1,70 @@
 import React from 'react';
-import { SafeAreaView, View, Text, StyleSheet, useColorScheme, StatusBar, Platform } from 'react-native';
+import {
+    ScrollView,
+    StyleSheet,
+    View,
+    Text,
+    useColorScheme,
+    StatusBar,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Slot } from 'expo-router';
 import Header from '../components/Header';
+import { Colors } from '@/constants/Colors';
 
-interface RootLayoutProps {
-    children: React.ReactNode;
-}
-
-const RootLayout: React.FC<RootLayoutProps> = ({ children }) => {
-    const colorScheme = useColorScheme();
+export default function Layout() {
+    const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
 
-    const styles = getStyles(isDarkMode);
+    const backgroundColor = isDarkMode
+        ? Colors.dark.background
+        : Colors.light.background;
+    const textColor = isDarkMode
+        ? Colors.dark.textSecondary
+        : Colors.light.textSecondary;
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor }]} edges={['top', 'bottom']}>
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-            <View style={styles.container}>
-                <Header />
-                {children}
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Built with ❤️ by a world-class React engineer.</Text>
+            <Header />
+            <ScrollView
+                contentInsetAdjustmentBehavior="automatic"
+                style={[styles.scrollView, { backgroundColor }]}
+                contentContainerStyle={styles.contentContainer}
+                keyboardShouldPersistTaps="handled"
+            >
+                <View style={styles.mainContent}>
+                    <Slot />
                 </View>
-            </View>
+                <View style={styles.footer}>
+                    <Text style={[styles.footerText, { color: textColor }]}>
+                        Built with ❤️ by a world-class React engineer.
+                    </Text>
+                </View>
+            </ScrollView>
         </SafeAreaView>
     );
-};
+}
 
-const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9', // slate-900 or slate-100
     },
-    container: {
+    scrollView: {
         flex: 1,
     },
-    footer: {
+    contentContainer: {
+        flexGrow: 1,
+    },
+    mainContent: {
         padding: 16,
-        marginTop: 32,
+    },
+    footer: {
         alignItems: 'center',
+        padding: 16,
+        marginTop: 24,
     },
     footerText: {
         fontSize: 12,
-        color: '#64748b' // slate-500
-    }
+    },
 });
-
-
-export default RootLayout;

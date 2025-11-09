@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
-import { Habit } from '../types';
+import { Habit } from '@/types';
 import HabitItem from './HabitItem';
+import { Colors } from '@/constants/Colors';
 
 interface HabitListProps {
     habits: Habit[];
@@ -12,14 +13,28 @@ interface HabitListProps {
 }
 
 const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, onDelete, onEdit }) => {
-    const isDarkMode = useColorScheme() === 'dark';
-    const styles = getStyles(isDarkMode);
+    const colorScheme = useColorScheme() ?? 'light';
+    const isDarkMode = colorScheme === 'dark';
+
+    const dynamicStyles = {
+        container: {
+            backgroundColor: isDarkMode ? Colors.dark.card : Colors.light.card,
+        },
+        title: {
+            color: isDarkMode ? Colors.dark.text : Colors.light.text,
+        },
+        emptyText: {
+            color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary,
+        },
+    };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Today's Habits</Text>
+        <View style={[styles.container, dynamicStyles.container]}>
+            <Text style={[styles.title, dynamicStyles.title]}>Today's Habits</Text>
             {habits.length === 0 ? (
-                <Text style={styles.emptyText}>No habits yet. Add one to get started!</Text>
+                <View style={styles.emptyContainer}>
+                    <Text style={[styles.emptyText, dynamicStyles.emptyText]}>No habits yet. Add one to get started!</Text>
+                </View>
             ) : (
                 <View style={styles.list}>
                     {habits.map(habit => (
@@ -38,27 +53,33 @@ const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, on
     );
 };
 
-const getStyles = (isDarkMode: boolean) => StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
-        backgroundColor: isDarkMode ? '#1e293b' : '#fff', // dark:bg-slate-800
         padding: 16,
         borderRadius: 8,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41, elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
     },
     title: {
         fontSize: 18,
         fontWeight: '600',
         marginBottom: 12,
-        color: isDarkMode ? '#e2e8f0' : '#1e293b', // dark:text-slate-200
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
     },
     emptyText: {
-        color: isDarkMode ? '#94a3b8' : '#64748b', // dark:text-slate-400
         textAlign: 'center',
-        paddingVertical: 16,
     },
     list: {
         gap: 8,
-    }
+    },
 });
+
 
 export default HabitList;

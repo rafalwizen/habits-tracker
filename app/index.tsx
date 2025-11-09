@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, useWindowDimensions } from 'react-native';
-import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Habit, Completions, HabitColor } from '../types';
-import { getTodayDateString } from '../utils/date';
+import { View, StyleSheet } from 'react-native';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Habit, Completions, HabitColor } from '@/types';
+import { getTodayDateString } from '@/utils/date';
 import AddHabitForm from '../components/AddHabitForm';
 import HabitList from '../components/HabitList';
 import ProgressCalendar from '../components/ProgressCalendar';
@@ -13,9 +13,6 @@ const HomePage: React.FC = () => {
     const [completions, setCompletions] = useLocalStorage<Completions>('completions', {});
     const [selectedHabitId, setSelectedHabitId] = useState<string | 'all'>('all');
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-
-    const { width } = useWindowDimensions();
-    const isLargeScreen = width >= 1024; // Tailwind 'lg' breakpoint
 
     const today = useMemo(() => getTodayDateString(), []);
 
@@ -37,7 +34,6 @@ const HomePage: React.FC = () => {
 
     const deleteHabit = (id: string) => {
         setHabits(habits.filter(habit => habit.id !== id));
-        // Also remove completions for this habit
         const newCompletions = { ...completions };
         for (const date in newCompletions) {
             newCompletions[date] = newCompletions[date].filter(habitId => habitId !== id);
@@ -82,19 +78,23 @@ const HomePage: React.FC = () => {
         return filtered;
     }, [completions, selectedHabitId]);
 
-    const mainContent = (
-        <View style={[styles.mainGrid, isLargeScreen && styles.mainGridLarge]}>
-            <View style={[styles.leftColumn, isLargeScreen && styles.leftColumnLarge]}>
-                <AddHabitForm onAddHabit={addHabit} />
-                <HabitList
-                    habits={habits}
-                    completions={completions[today] || []}
-                    onToggle={id => toggleHabit(id, today)}
-                    onDelete={deleteHabit}
-                    onEdit={setEditingHabit}
-                />
+    return (
+        <View style={styles.container}>
+            <View style={styles.column}>
+                <View style={styles.formContainer}>
+                    <AddHabitForm onAddHabit={addHabit} />
+                </View>
+                <View style={styles.listContainer}>
+                    <HabitList
+                        habits={habits}
+                        completions={completions[today] || []}
+                        onToggle={id => toggleHabit(id, today)}
+                        onDelete={deleteHabit}
+                        onEdit={setEditingHabit}
+                    />
+                </View>
             </View>
-            <View style={[styles.rightColumn, isLargeScreen && styles.rightColumnLarge]}>
+            <View style={styles.calendarContainer}>
                 <ProgressCalendar
                     habits={habits}
                     completions={filteredCompletions}
@@ -102,14 +102,6 @@ const HomePage: React.FC = () => {
                     onSelectHabit={setSelectedHabitId}
                 />
             </View>
-        </View>
-    );
-
-    return (
-        <>
-            <ScrollView contentContainerStyle={styles.container}>
-                {mainContent}
-            </ScrollView>
             {editingHabit && (
                 <EditHabitModal
                     habit={editingHabit}
@@ -117,34 +109,24 @@ const HomePage: React.FC = () => {
                     onClose={() => setEditingHabit(null)}
                 />
             )}
-        </>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
-        maxWidth: 1024,
-        width: '100%',
-        alignSelf: 'center',
-    },
-    mainGrid: {
-        gap: 32,
-    },
-    mainGridLarge: {
-        flexDirection: 'row',
-    },
-    leftColumn: {
-        gap: 24,
-    },
-    leftColumnLarge: {
         flex: 1,
     },
-    rightColumn: {},
-    rightColumnLarge: {
-        flex: 2,
-    }
+    column: {
+        marginBottom: 24,
+    },
+    formContainer: {
+        marginBottom: 24,
+    },
+    listContainer: {
+        marginBottom: 24,
+    },
+    calendarContainer: {},
 });
-
 
 export default HomePage;
