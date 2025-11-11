@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { Completions, Habit, HabitColor } from '@/types';
 import { formatDate } from '@/utils/date';
 import { Colors } from '@/constants/Colors';
@@ -21,6 +21,7 @@ interface ProgressCalendarProps {
 }
 
 const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions }) => {
+    const [viewMode, setViewMode] = useState<'combined' | 'separate'>('separate');
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
 
@@ -39,12 +40,24 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
     }
 
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
     const baseIntensityClass = isDarkMode ? Colors.dark.cardMuted : Colors.light.cardMuted;
 
     const getIntensityForHabit = (date: Date, habitId: string) => {
         const dateString = formatDate(date);
         return completions[dateString]?.includes(habitId) ? 1 : 0;
+    };
+
+    const getCombinedIntensity = (date: Date) => {
+        const dateString = formatDate(date);
+        const completionCount = completions[dateString]?.length || 0;
+        if (completionCount === 0) return 0;
+        if (habits.length === 0) return 0;
+
+        const percentage = completionCount / habits.length;
+        if (percentage < 0.25) return 1;
+        if (percentage < 0.5) return 2;
+        if (percentage < 0.75) return 3;
+        return 4;
     };
 
     const dynamicStyles = {
@@ -54,6 +67,16 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
         weekdayText: { color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary },
         legendText: { color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary },
         emptyText: { color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary },
+        switcherButton: {
+            backgroundColor: isDarkMode ? Colors.dark.input : Colors.light.input,
+            borderColor: isDarkMode ? Colors.dark.border : Colors.light.border,
+        },
+        switcherButtonActive: {
+            backgroundColor: Colors.emerald,
+        },
+        switcherTextInactive: {
+            color: isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary,
+        },
     };
 
     if (habits.length === 0) {
@@ -69,60 +92,153 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
         );
     }
 
+    const renderCombinedView = () => {
+        const currentScheme = colorSchemes.emerald;
+        const intensityClasses = [baseIntensityClass, ...currentScheme];
+
+        return (
+            <View style={[styles.habitCalendarCard, dynamicStyles.container]}>
+                <Text style={[styles.habitTitle, dynamicStyles.habitTitle]}>All Habits Combined</Text>
+
+                <View style={styles.calendarContainer}>
+                    <View style={styles.weekdaysContainer}>
+                        {weekDays.map((day, i) => (
+                            <Text
+                                key={day}
+                                style={[
+                                    styles.weekdayText,
+                                    dynamicStyles.weekdayText,
+                                    { opacity: i % 2 !== 0 ? 1 : 0 }
+                                ]}
+                            >
+                                {day}
+                            </Text>
+                        ))}
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <View style={styles.grid}>
+                            {dateArray.map(date => {
+                                const intensity = getCombinedIntensity(date);
+                                return (
+                                    <View
+                                        key={date.toISOString()}
+                                        style={[
+                                            styles.dayCell,
+                                            { backgroundColor: intensityClasses[intensity] }
+                                        ]}
+                                    />
+                                );
+                            })}
+                        </View>
+                    </ScrollView>
+                </View>
+
+                <View style={styles.legend}>
+                    <Text style={[styles.legendText, dynamicStyles.legendText]}>Less</Text>
+                    {intensityClasses.map((c, i) => (
+                        <View key={i} style={[styles.legendCell, {backgroundColor: c}]} />
+                    ))}
+                    <Text style={[styles.legendText, dynamicStyles.legendText]}>More</Text>
+                </View>
+            </View>
+        );
+    };
+
+    const renderSeparateView = () => {
+        return habits.map(habit => {
+            const currentScheme = colorSchemes[habit.color] || colorSchemes.emerald;
+            const intensityClasses = [baseIntensityClass, currentScheme[3]];
+
+            return (
+                <View key={habit.id} style={[styles.habitCalendarCard, dynamicStyles.container]}>
+                    <Text style={[styles.habitTitle, dynamicStyles.habitTitle]}>{habit.name}</Text>
+
+                    <View style={styles.calendarContainer}>
+                        <View style={styles.weekdaysContainer}>
+                            {weekDays.map((day, i) => (
+                                <Text
+                                    key={day}
+                                    style={[
+                                        styles.weekdayText,
+                                        dynamicStyles.weekdayText,
+                                        { opacity: i % 2 !== 0 ? 1 : 0 }
+                                    ]}
+                                >
+                                    {day}
+                                </Text>
+                            ))}
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            <View style={styles.grid}>
+                                {dateArray.map(date => {
+                                    const intensity = getIntensityForHabit(date, habit.id);
+                                    return (
+                                        <View
+                                            key={date.toISOString()}
+                                            style={[
+                                                styles.dayCell,
+                                                { backgroundColor: intensityClasses[intensity] }
+                                            ]}
+                                        />
+                                    );
+                                })}
+                            </View>
+                        </ScrollView>
+                    </View>
+
+                    <View style={styles.legend}>
+                        <Text style={[styles.legendText, dynamicStyles.legendText]}>Incomplete</Text>
+                        <View style={[styles.legendCell, {backgroundColor: intensityClasses[0]}]} />
+                        <View style={[styles.legendCell, {backgroundColor: intensityClasses[1]}]} />
+                        <Text style={[styles.legendText, dynamicStyles.legendText]}>Complete</Text>
+                    </View>
+                </View>
+            );
+        });
+    };
+
     return (
         <View>
-            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Progress</Text>
+            <View style={styles.header}>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Progress</Text>
+                <View style={styles.switcher}>
+                    <TouchableOpacity
+                        style={[
+                            styles.switcherButton,
+                            dynamicStyles.switcherButton,
+                            viewMode === 'combined' && dynamicStyles.switcherButtonActive
+                        ]}
+                        onPress={() => setViewMode('combined')}
+                    >
+                        <Text style={[
+                            styles.switcherText,
+                            viewMode !== 'combined' && dynamicStyles.switcherTextInactive,
+                            viewMode === 'combined' && styles.switcherTextActive
+                        ]}>
+                            Combined
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            styles.switcherButton,
+                            dynamicStyles.switcherButton,
+                            viewMode === 'separate' && dynamicStyles.switcherButtonActive
+                        ]}
+                        onPress={() => setViewMode('separate')}
+                    >
+                        <Text style={[
+                            styles.switcherText,
+                            viewMode !== 'separate' && dynamicStyles.switcherTextInactive,
+                            viewMode === 'separate' && styles.switcherTextActive
+                        ]}>
+                            Separate
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+
             <View style={styles.calendarsContainer}>
-                {habits.map(habit => {
-                    const currentScheme = colorSchemes[habit.color] || colorSchemes.emerald;
-                    const intensityClasses = [baseIntensityClass, currentScheme[3]];
-
-                    return (
-                        <View key={habit.id} style={[styles.habitCalendarCard, dynamicStyles.container]}>
-                            <Text style={[styles.habitTitle, dynamicStyles.habitTitle]}>{habit.name}</Text>
-
-                            <View style={styles.calendarContainer}>
-                                <View style={styles.weekdaysContainer}>
-                                    {weekDays.map((day, i) => (
-                                        <Text
-                                            key={day}
-                                            style={[
-                                                styles.weekdayText,
-                                                dynamicStyles.weekdayText,
-                                                { opacity: i % 2 !== 0 ? 1 : 0 }
-                                            ]}
-                                        >
-                                            {day}
-                                        </Text>
-                                    ))}
-                                </View>
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                    <View style={styles.grid}>
-                                        {dateArray.map(date => {
-                                            const intensity = getIntensityForHabit(date, habit.id);
-                                            return (
-                                                <View
-                                                    key={date.toISOString()}
-                                                    style={[
-                                                        styles.dayCell,
-                                                        { backgroundColor: intensityClasses[intensity] }
-                                                    ]}
-                                                />
-                                            );
-                                        })}
-                                    </View>
-                                </ScrollView>
-                            </View>
-
-                            <View style={styles.legend}>
-                                <Text style={[styles.legendText, dynamicStyles.legendText]}>Incomplete</Text>
-                                <View style={[styles.legendCell, {backgroundColor: intensityClasses[0]}]} />
-                                <View style={[styles.legendCell, {backgroundColor: intensityClasses[1]}]} />
-                                <Text style={[styles.legendText, dynamicStyles.legendText]}>Complete</Text>
-                            </View>
-                        </View>
-                    );
-                })}
+                {viewMode === 'combined' ? renderCombinedView() : renderSeparateView()}
             </View>
         </View>
     );
@@ -138,10 +254,32 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 1
     },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        marginBottom: 12,
+    },
+    switcher: {
+        flexDirection: 'row',
+        borderRadius: 6,
+        overflow: 'hidden',
+    },
+    switcherButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+    },
+    switcherText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    switcherTextActive: {
+        color: '#FFF',
     },
     calendarsContainer: {
         gap: 16,
