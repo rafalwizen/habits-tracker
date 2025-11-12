@@ -11,10 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Slot } from 'expo-router';
 import Header from '../components/Header';
 import { Colors } from '@/constants/Colors';
+import { LanguageProvider, useLanguage } from '@/i18n/LanguageContext';
 
-export default function Layout() {
+function LayoutContent() {
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     const backgroundColor = isDarkMode
         ? Colors.dark.background
@@ -38,11 +40,19 @@ export default function Layout() {
                 </View>
                 <View style={styles.footer}>
                     <Text style={[styles.footerText, { color: textColor }]}>
-                        Built with ❤️ by a world-class React engineer.
+                        {t.footerText}
                     </Text>
                 </View>
             </ScrollView>
         </SafeAreaView>
+    );
+}
+
+export default function Layout() {
+    return (
+        <LanguageProvider>
+            <LayoutContent />
+        </LanguageProvider>
     );
 }
 

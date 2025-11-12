@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } 
 import { Completions, Habit, HabitColor } from '@/types';
 import { formatDate } from '@/utils/date';
 import { Colors } from '@/constants/Colors';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const colorSchemes: Record<HabitColor, string[]> = {
     emerald: [Colors.emerald_tint_1, Colors.emerald_tint_2, Colors.emerald_tint_3, Colors.emerald],
@@ -24,6 +25,7 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
     const [viewMode, setViewMode] = useState<'combined' | 'separate'>('separate');
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     const today = new Date();
     const endDate = new Date(today);
@@ -39,7 +41,16 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
         currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekDays = [
+        t.weekdays.sun,
+        t.weekdays.mon,
+        t.weekdays.tue,
+        t.weekdays.wed,
+        t.weekdays.thu,
+        t.weekdays.fri,
+        t.weekdays.sat,
+    ];
+
     const baseIntensityClass = isDarkMode ? Colors.dark.cardMuted : Colors.light.cardMuted;
 
     const getIntensityForHabit = (date: Date, habitId: string) => {
@@ -82,10 +93,10 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
     if (habits.length === 0) {
         return (
             <View style={[styles.container, dynamicStyles.container]}>
-                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Progress</Text>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>{t.progress}</Text>
                 <View style={styles.emptyContainer}>
                     <Text style={[styles.emptyText, dynamicStyles.emptyText]}>
-                        Add habits to see your progress!
+                        {t.addHabitsToSeeProgress}
                     </Text>
                 </View>
             </View>
@@ -98,7 +109,7 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
 
         return (
             <View style={[styles.habitCalendarCard, dynamicStyles.container]}>
-                <Text style={[styles.habitTitle, dynamicStyles.habitTitle]}>All Habits Combined</Text>
+                <Text style={[styles.habitTitle, dynamicStyles.habitTitle]}>{t.allHabitsCombined}</Text>
 
                 <View style={styles.calendarContainer}>
                     <View style={styles.weekdaysContainer}>
@@ -134,11 +145,11 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
                 </View>
 
                 <View style={styles.legend}>
-                    <Text style={[styles.legendText, dynamicStyles.legendText]}>Less</Text>
+                    <Text style={[styles.legendText, dynamicStyles.legendText]}>{t.less}</Text>
                     {intensityClasses.map((c, i) => (
                         <View key={i} style={[styles.legendCell, {backgroundColor: c}]} />
                     ))}
-                    <Text style={[styles.legendText, dynamicStyles.legendText]}>More</Text>
+                    <Text style={[styles.legendText, dynamicStyles.legendText]}>{t.more}</Text>
                 </View>
             </View>
         );
@@ -187,10 +198,10 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
                     </View>
 
                     <View style={styles.legend}>
-                        <Text style={[styles.legendText, dynamicStyles.legendText]}>Incomplete</Text>
+                        <Text style={[styles.legendText, dynamicStyles.legendText]}>{t.incomplete}</Text>
                         <View style={[styles.legendCell, {backgroundColor: intensityClasses[0]}]} />
                         <View style={[styles.legendCell, {backgroundColor: intensityClasses[1]}]} />
-                        <Text style={[styles.legendText, dynamicStyles.legendText]}>Complete</Text>
+                        <Text style={[styles.legendText, dynamicStyles.legendText]}>{t.complete}</Text>
                     </View>
                 </View>
             );
@@ -200,7 +211,7 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
     return (
         <View>
             <View style={styles.header}>
-                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Progress</Text>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>{t.progress}</Text>
                 <View style={styles.switcher}>
                     <TouchableOpacity
                         style={[
@@ -215,7 +226,7 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
                             viewMode !== 'combined' && dynamicStyles.switcherTextInactive,
                             viewMode === 'combined' && styles.switcherTextActive
                         ]}>
-                            Combined
+                            {t.combined}
                         </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -231,7 +242,7 @@ const ProgressCalendar: React.FC<ProgressCalendarProps> = ({ habits, completions
                             viewMode !== 'separate' && dynamicStyles.switcherTextInactive,
                             viewMode === 'separate' && styles.switcherTextActive
                         ]}>
-                            Separate
+                            {t.separate}
                         </Text>
                     </TouchableOpacity>
                 </View>

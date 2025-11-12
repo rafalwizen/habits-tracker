@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Habit, HabitColor } from '@/types';
 import HabitItem from './HabitItem';
 import { Colors } from '@/constants/Colors';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 interface HabitListProps {
     habits: Habit[];
@@ -24,6 +25,7 @@ const colorClasses: Record<HabitColor, { border: string; bg: string }> = {
 const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, onDelete, onEdit }) => {
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     const dynamicStyles = {
         sectionTitle: {
@@ -40,10 +42,10 @@ const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, on
     if (habits.length === 0) {
         return (
             <View>
-                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Today's Habits</Text>
+                <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>{t.todaysHabits}</Text>
                 <View style={[styles.emptyCard, dynamicStyles.emptyCard]}>
                     <Text style={[styles.emptyText, dynamicStyles.emptyText]}>
-                        No habits yet. Add one to get started!
+                        {t.noHabitsYet}
                     </Text>
                 </View>
             </View>
@@ -52,7 +54,7 @@ const HabitList: React.FC<HabitListProps> = ({ habits, completions, onToggle, on
 
     return (
         <View>
-            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>Today's Habits</Text>
+            <Text style={[styles.sectionTitle, dynamicStyles.sectionTitle]}>{t.todaysHabits}</Text>
             <View style={styles.habitCardsContainer}>
                 {habits.map(habit => {
                     const habitColorScheme = colorClasses[habit.color];

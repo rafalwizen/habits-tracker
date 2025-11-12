@@ -2,10 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import { Colors } from '@/constants/Colors';
+import { useLanguage } from '@/i18n/LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header: React.FC = () => {
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     return (
         <View style={[styles.header, { backgroundColor: isDarkMode ? Colors.dark.header : Colors.light.header, borderBottomColor: isDarkMode ? Colors.dark.border : Colors.light.border }]}>
@@ -22,9 +25,10 @@ const Header: React.FC = () => {
                         <Path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </Svg>
                     <Text style={[styles.title, { color: isDarkMode ? Colors.dark.text : Colors.light.text }]}>
-                        Zenith Habit Tracker
+                        {t.appTitle}
                     </Text>
                 </View>
+                <LanguageSwitcher />
             </View>
         </View>
     );

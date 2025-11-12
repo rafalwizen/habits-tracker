@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, useColorScheme } f
 import { PlusIcon } from './Icons';
 import { HABIT_COLORS, HabitColor, DEFAULT_HABIT_COLOR } from '@/types';
 import { Colors } from '@/constants/Colors';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const colorClasses: Record<HabitColor, { bg: string; ring: string }> = {
     emerald: { bg: Colors.emerald, ring: '#6ee7b7' },
@@ -22,6 +23,7 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onAddHabit }) => {
     const [color, setColor] = useState<HabitColor>(DEFAULT_HABIT_COLOR);
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     const handleSubmit = () => {
         if (name.trim()) {
@@ -50,11 +52,11 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onAddHabit }) => {
 
     return (
         <View style={[styles.container, dynamicStyles.container]}>
-            <Text style={[styles.title, dynamicStyles.title]}>Add New Habit</Text>
+            <Text style={[styles.title, dynamicStyles.title]}>{t.addNewHabit}</Text>
             <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="e.g., Meditate for 10 minutes"
+                placeholder={t.habitPlaceholder}
                 placeholderTextColor={isDarkMode ? Colors.dark.textSecondary : Colors.light.textSecondary}
                 style={[styles.input, dynamicStyles.input]}
             />
@@ -71,7 +73,7 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onAddHabit }) => {
                                 borderWidth: 2,
                             },
                         ]}
-                        aria-label={`Select color ${c}`}
+                        aria-label={`${t.selectColor} ${c}`}
                     />
                 ))}
             </View>
@@ -81,7 +83,7 @@ const AddHabitForm: React.FC<AddHabitFormProps> = ({ onAddHabit }) => {
                 style={[styles.button, !name.trim() && dynamicStyles.buttonDisabled]}
             >
                 <PlusIcon size={20} color="#FFF" />
-                <Text style={styles.buttonText}>Add Habit</Text>
+                <Text style={styles.buttonText}>{t.addHabitButton}</Text>
             </TouchableOpacity>
         </View>
     );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { Habit, HABIT_COLORS, HabitColor } from '@/types';
 import { Colors } from '@/constants/Colors';
+import { useLanguage } from '@/i18n/LanguageContext';
 
 const colorClasses: Record<HabitColor, { bg: string; ring: string }> = {
     emerald: { bg: Colors.emerald, ring: '#6ee7b7' },
@@ -23,6 +24,7 @@ const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClos
     const [color, setColor] = useState<HabitColor>(habit.color);
     const colorScheme = useColorScheme() ?? 'light';
     const isDarkMode = colorScheme === 'dark';
+    const { t } = useLanguage();
 
     useEffect(() => {
         setName(habit.name);
@@ -58,10 +60,10 @@ const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClos
             >
                 <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} />
                 <View style={[styles.modalView, dynamicStyles.modalView]}>
-                    <Text style={[styles.title, dynamicStyles.title]}>Edit Habit</Text>
+                    <Text style={[styles.title, dynamicStyles.title]}>{t.editHabitTitle}</Text>
 
                     <View style={styles.formGroup}>
-                        <Text style={[styles.label, dynamicStyles.label]}>Habit Name</Text>
+                        <Text style={[styles.label, dynamicStyles.label]}>{t.habitName}</Text>
                         <TextInput
                             value={name}
                             onChangeText={setName}
@@ -70,7 +72,7 @@ const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClos
                     </View>
 
                     <View style={styles.formGroup}>
-                        <Text style={[styles.label, dynamicStyles.label]}>Color</Text>
+                        <Text style={[styles.label, dynamicStyles.label]}>{t.color}</Text>
                         <View style={styles.colorSelector}>
                             {HABIT_COLORS.map(c => (
                                 <TouchableOpacity
@@ -81,7 +83,7 @@ const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClos
                                         { backgroundColor: colorClasses[c].bg },
                                         color === c && { borderColor: colorClasses[c].ring, borderWidth: 2 }
                                     ]}
-                                    aria-label={`Select color ${c}`}
+                                    aria-label={`${t.selectColor} ${c}`}
                                 />
                             ))}
                         </View>
@@ -89,14 +91,14 @@ const EditHabitModal: React.FC<EditHabitModalProps> = ({ habit, onUpdate, onClos
 
                     <View style={styles.buttonContainer}>
                         <TouchableOpacity onPress={onClose} style={[styles.button, styles.cancelButton, dynamicStyles.cancelButton]}>
-                            <Text style={[styles.buttonText, dynamicStyles.cancelButtonText]}>Cancel</Text>
+                            <Text style={[styles.buttonText, dynamicStyles.cancelButtonText]}>{t.cancel}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleSubmit}
                             disabled={!name.trim()}
                             style={[styles.button, styles.saveButton, !name.trim() && dynamicStyles.saveButtonDisabled]}
                         >
-                            <Text style={[styles.buttonText, {color: '#fff'}]}>Save Changes</Text>
+                            <Text style={[styles.buttonText, {color: '#fff'}]}>{t.saveChanges}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
