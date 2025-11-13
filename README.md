@@ -31,9 +31,7 @@ A simple habit tracking application built with React Native and Expo. Track your
 
 ## 📸 Screenshots
 
-```
 ![Screen 1](screenshots/screenshot1.png)
-```
 
 ## 🚀 Getting Started
 
