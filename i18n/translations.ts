@@ -87,7 +87,7 @@ export const translations: Record<Language, Translations> = {
             fri: 'Fri',
             sat: 'Sat',
         },
-        footerText: 'Built with ❤️ by a world-class React engineer.',
+        footerText: 'Built with ❤️ by Rafał Wiżeń.',
     },
     pl: {
         appTitle: 'Zenith Tracker Nawyków',
@@ -124,6 +124,6 @@ export const translations: Record<Language, Translations> = {
             fri: 'Pt',
             sat: 'Sb',
         },
-        footerText: 'Stworzone z ❤️ przez światowej klasy inżyniera React.',
+        footerText: 'Stworzone z ❤️ przez Rafała Wiżenia.',
     },
 };

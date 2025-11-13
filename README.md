@@ -270,7 +270,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 - Icons designed using Heroicons
 - Inspired by GitHub's contribution calendar
-- Built with ❤️ by a world-class React engineer
+- Built with ❤️ by Rafał Wiżeń
 
 ## 📈 Roadmap
 
