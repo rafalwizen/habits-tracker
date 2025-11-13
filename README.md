@@ -1,50 +1,324 @@
-# Welcome to your Expo app 👋
+# 🎯 Habit Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A simple habit tracking application built with React Native and Expo. Track your daily habits, visualize your progress, and build better routines.
 
-## Get started
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React Native](https://img.shields.io/badge/React%20Native-0.74-blue.svg)
+![Expo](https://img.shields.io/badge/Expo-51-black.svg)
 
-1. Install dependencies
+## ✨ Features
 
+### Core Functionality
+- ✅ **Habit Management** - Create, edit, and delete habits
+- 🎨 **Color Coding** - Choose from 6 colors to categorize habits
+- 📅 **Daily Tracking** - Mark habits as complete/incomplete each day
+- 📊 **Progress Visualization** - GitHub-style contribution calendar
+- 🌍 **Multilingual Support** - English and Polish languages
+- 🌓 **Dark Mode** - Full dark/light theme support
+- 💾 **Persistent Storage** - All data saved locally
+
+### Visualization Modes
+- **Combined View** - See all habits together in one calendar
+- **Separate View** - Individual calendars for each habit
+- **12-Week History** - Track your progress over time
+
+### User Experience
+- 🎯 Intuitive interface
+- ⚡ Fast and responsive
+- 📱 Mobile-optimized
+- 🎭 Smooth animations
+- ♿ Accessibility support
+
+## 📸 Screenshots
+
+```
+![Screen 1](screenshots/screenshot1.png)
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or yarn
+- Expo CLI
+- iOS Simulator (for iOS development) or Android Studio (for Android development)
+
+### Installation
+
+1. **Clone the repository**
    ```bash
-   npm install
+   git clone https://github.com/yourusername/zenith-habit-tracker.git
+   cd zenith-habit-tracker
    ```
 
-2. Start the app
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
+3. **Install required packages**
+   ```bash
+   npx expo install react-native-svg
+   npx expo install react-native-safe-area-context
+   npx expo install @react-native-async-storage/async-storage
+   ```
+
+4. **Start the development server**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+5. **Run on your device**
+    - Press `i` for iOS simulator
+    - Press `a` for Android emulator
+    - Scan QR code with Expo Go app for physical device
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📁 Project Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+zenith-habit-tracker/
+├── app/
+│   ├── _layout.tsx          # Root layout with providers
+│   └── index.tsx            # Main home screen
+├── components/
+│   ├── AddHabitForm.tsx     # Form to add new habits
+│   ├── EditHabitModal.tsx   # Modal for editing habits
+│   ├── HabitItem.tsx        # Individual habit component
+│   ├── HabitList.tsx        # List of today's habits
+│   ├── Header.tsx           # App header with language switcher
+│   ├── Icons.tsx            # SVG icon components
+│   ├── LanguageSwitcher.tsx # Language selection component
+│   └── ProgressCalendar.tsx # Calendar visualization
+├── constants/
+│   └── Colors.ts            # Color scheme definitions
+├── hooks/
+│   └── useLocalStorage.ts   # Custom hook for storage
+├── i18n/
+│   ├── translations.ts      # Translation strings (EN/PL)
+│   └── LanguageContext.tsx  # Language context provider
+├── types/
+│   └── index.ts             # TypeScript type definitions
+├── utils/
+│   ├── date.ts              # Date utility functions
+│   └── generateId.ts        # ID generation utility
+├── app.json                 # Expo configuration
+├── package.json             # Dependencies
+└── README.md               # This file
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
+## 🌍 Internationalization
 
-To learn more about developing your project with Expo, look at the following resources:
+The app supports multiple languages out of the box:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- 🇬🇧 **English** (Default)
+- 🇵🇱 **Polish**
 
-## Join the community
+### Adding a New Language
 
-Join our community of developers creating universal apps.
+1. Update `i18n/translations.ts`:
+   ```typescript
+   export type Language = 'en' | 'pl' | 'your-lang';
+   ```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+2. Add translations:
+   ```typescript
+   export const translations: Record<Language, Translations> = {
+     en: { /* ... */ },
+     pl: { /* ... */ },
+     'your-lang': {
+       appTitle: 'Your Translation',
+       // ... all other keys
+     },
+   };
+   ```
+
+3. Update `LanguageSwitcher.tsx` to include the new language option.
+
+## 💾 Data Storage
+
+The app uses AsyncStorage for local data persistence:
+
+- **Habits** - Stored under `@zenith_habits`
+- **Completions** - Stored under `@zenith_completions`
+- **Language** - Stored under `@zenith_language`
+
+All data is stored locally on the device and persists across app restarts.
+
+## 🎯 Usage
+
+### Adding a Habit
+1. Enter habit name in the input field
+2. Select a color
+3. Tap "Add Habit" button
+
+### Completing a Habit
+- Tap the checkbox next to any habit to mark it complete/incomplete
+
+### Editing a Habit
+1. Tap the pencil icon on any habit
+2. Modify the name or color
+3. Tap "Save Changes"
+
+### Deleting a Habit
+- Tap the trash icon on any habit to delete it
+
+### Viewing Progress
+- Scroll down to see your progress calendar
+- Toggle between "Combined" and "Separate" views
+- Each cell represents one day
+- Color intensity shows completion rate
+
+## 🛠️ Built With
+
+- **[React Native](https://reactnative.dev/)** - Mobile framework
+- **[Expo](https://expo.dev/)** - Development platform
+- **[TypeScript](https://www.typescriptlang.org/)** - Type safety
+- **[React Native SVG](https://github.com/software-mansion/react-native-svg)** - SVG rendering
+- **[AsyncStorage](https://react-native-async-storage.github.io/async-storage/)** - Local storage
+- **[Expo Router](https://docs.expo.dev/router/introduction/)** - Navigation
+
+## 📱 Supported Platforms
+
+- ✅ iOS (iPhone & iPad)
+- ✅ Android
+- ❌ Web (not optimized)
+
+## 🎨 Customization
+
+### Changing Colors
+
+Edit `constants/Colors.ts` to customize the color scheme:
+
+```typescript
+export const Colors = {
+  emerald: '#10b981',
+  // ... add your colors
+};
+```
+
+### Modifying Themes
+
+The app automatically adapts to system dark/light mode. Customize theme colors in `constants/Colors.ts`:
+
+```typescript
+export const Colors = {
+  light: {
+    background: '#f9fafb',
+    text: '#111827',
+    // ...
+  },
+  dark: {
+    background: '#111827',
+    text: '#f9fafb',
+    // ...
+  },
+};
+```
+
+## 🧪 Testing
+
+```bash
+# Run tests (if configured)
+npm test
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+```
+
+## 📦 Building for Production
+
+### iOS
+```bash
+eas build --platform ios
+```
+
+### Android
+```bash
+eas build --platform android
+```
+
+### Both Platforms
+```bash
+eas build --platform all
+```
+
+## 🐛 Bug Reports
+
+Found a bug? Please open an issue with:
+- Description of the bug
+- Steps to reproduce
+- Expected behavior
+- Screenshots (if applicable)
+- Device/OS information
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+
+## 👨‍💻 Author
+
+**Your Name**
+- GitHub: [@rafalwizen](https://github.com/rafalwizen)
+- Email: [rafal.wizen@gmail.com](mailto:rafal.wizen@gmail.com)
+
+## 🙏 Acknowledgments
+
+- Icons designed using Heroicons
+- Inspired by GitHub's contribution calendar
+- Built with ❤️ by a world-class React engineer
+
+## 📈 Roadmap
+
+### Upcoming Features
+- [ ] Weekly/Monthly statistics
+- [ ] Habit streaks and achievements
+- [ ] Reminders and notifications
+- [ ] Data export/import
+- [ ] Cloud sync
+- [ ] More languages
+- [ ] Custom habit categories
+- [ ] Social sharing
+- [ ] Widgets
+
+## 💡 Tips & Best Practices
+
+### For Best Results
+1. **Be Consistent** - Check in daily to track your habits
+2. **Start Small** - Begin with 2-3 habits before adding more
+3. **Choose Meaningful Colors** - Use colors to categorize related habits
+4. **Review Progress** - Check your calendar weekly to stay motivated
+
+### Performance
+- The app loads instantly with local storage
+- No internet connection required
+- Smooth animations at 60fps
+- Optimized for battery life
+
+## 🔒 Privacy
+
+- ✅ All data stored locally on your device
+- ✅ No analytics or tracking
+- ✅ No account required
+- ✅ No data sent to external servers
+- ✅ Complete privacy and control
+
+## 📞 Support
+
+Need help? Have questions?
+
+- 📧 Email: rafal.wizen@gmail.com
+
+## ⭐ Star History
+
+If you find this project helpful, please consider giving it a star! ⭐
+
+---
+
+**Made with 💚 using React Native & Expo**
